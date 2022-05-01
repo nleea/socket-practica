@@ -6,63 +6,163 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat</title>
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"
+    <!-- <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"
         integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k"
-        crossorigin="anonymous"></script>
+        crossorigin="anonymous"></script> -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <div class="container">
+    <div class="container mt-3">
         <div class="row">
-            <div class="card col-1">
-                <div class="body">
-                    <select name="room" id="room">
-                        <option value="room1">room1</option>
-                        <option value="room2">room2</option>
-                        <option value="room3">room3</option>
-                    </select>
-                </div>
-            </div>
-            <div class="card col-11">
-                <div class="body">
-                    <div class="form-group">
-                        <input type="text" name="message" id="message">
-                        <button class="btn btn-success" id="send_message">Send</button>
+            <div class="card col-3 h-25">
+                <div class="card-body my-2">
+                    <p>
+                        <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample" role="button"
+                            aria-expanded="false" aria-controls="collapseExample">
+                            Rooms
+                        </a>
+                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseExample2" aria-expanded="false" aria-controls="collapseExample2">
+                            Users
+                        </button>
+                    </p>
+                    <div class="collapse rm" id="collapseExample">
+                        <select name="room" id="room">
+                            <option value="room1">room1</option>
+                            <option value="room2">room2</option>
+                            <option value="room3">room3</option>
+                        </select>
+                        <div class="form-group mt-3">
+                            <input type="text" name="message" id="message_room">
+                            <button class="btn btn-success" id="send_message_room">Send</button>
+                        </div>
+                    </div>
+                    <div class="collapse us" id="collapseExample2">
+                        <select name="private" id="private">
+                            <option value="static">---------------</option>
+                        </select>
+                        <div class="form-group mt-3">
+                            <input type="text" name="message" id="message_user">
+                            <button class="btn btn-success" id="send_message_user">Send</button>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div class="col-9 mx-auto card">
+                <div class="card-body">
+                    <ul class="message_body"></ul>
+                </div>
+            </div>
         </div>
+
     </div>
-    <div class="container w-50 mx-auto">
-        <ul class="message_body"></ul>
-    </div>
+
+    <script type="importmap">
+  {
+    "imports": {
+      "socket.io-client": "https://cdn.socket.io/4.4.1/socket.io.esm.min.js"
+    }
+  }
+</script>
+
     <script type="module">
-        const sw = io('http://localhost:4000/');
-        sw.on('connection', (socket) => {
-            console.log(socket.id)
+        import { Manager } from 'socket.io-client';
+        const manager = new Manager('http://localhost:4000/');
+        const sw = manager.socket('/');
+        const socket_private = manager.socket('/grupo1');
+        let id = ''
+        sw.on('connection', async (socket) => {
+
         });
         let room = 'room1';
+        let user = document.getElementById('private').options[0].value;
+        console.log(user);
         // sw.emit('message', { message: 'hello' });
         const changeRoom = document.getElementById('room');
         changeRoom.addEventListener('change', (e) => {
-            room = e.target.options[e.target.options.selectedIndex].value
-            sw.emit('change_room', { id: io.id, room: room });
-
+            room = e.target.options[e.target.options.selectedIndex].value;
+            sw.emit('change_room', { a: sw.id, room: room });
         });
-        const button = document.getElementById('send_message');
+
+
+        const button = document.getElementById('send_message_room');
+        const button_user = document.getElementById('send_message_user');
         const body = document.querySelector('.message_body');
+        const online = document.getElementById('private');
         button.addEventListener('click', (e) => {
-            const inputMessage = document.getElementById('message');
+            const inputMessage = document.getElementById('message_room');
             sw.emit('private_message', { room: room, message: inputMessage.value });
             body.insertAdjacentHTML('afterend', `<li>${inputMessage.value}</li>`);
             inputMessage.value = '';
         });
 
-        sw.on('message_private', (data) => {
-            body.insertAdjacentHTML('afterend', `<li>${data.message}</li>`);
+        button_user.addEventListener('click', (e) => {
+            const inputMessage = document.getElementById('message_user');
+            let user_id = document.getElementById('private').options[document.getElementById('private').selectedIndex].value;
+            sw.emit('user', { id: user_id, message: inputMessage.value });
+            body.insertAdjacentHTML('afterend', `<li>${inputMessage.value}</li>`);
+            inputMessage.value = '';
         });
+
+        sw.emit('online');
+        sw.on('show_online', (data) => {
+            while (online.hasChildNodes()) {
+                if (online.firstChild.value !== 'static') {
+                    online.removeChild(online.lastChild)
+                } else if (online.children.length === 1) {
+                    break;
+                }
+            }
+            // const option = document.createElement('option');
+            // option.value = '----------';
+            data.id.forEach((s) => {
+                if (s !== sw.id) {
+                    const option = document.createElement('option');
+                    option.value = s;
+                    option.textContent = `user-${s}`;
+                    online.appendChild(option);
+                }
+            });
+        });
+
+        sw.emit('nuevo', 'sss');
+        sw.on('actualiza', (data) => {
+            while (online.hasChildNodes()) {
+                if (online.firstChild.value !== 'static') {
+                    online.removeChild(online.lastChild)
+                } else if (online.children.length === 1) {
+                    break;
+                }
+            }
+            const option = document.createElement('option');
+            option.value = '----------';
+            data.forEach((s) => {
+                if (s !== sw.id) {
+                    const option = document.createElement('option');
+                    option.value = s;
+                    option.textContent = `user-${s}`;
+                    online.appendChild(option);
+                }
+            });
+        });
+
+        sw.on('message_private', (data) => {
+            body.insertAdjacentHTML('beforebegin', `<li>${data.message}</li>`);
+        });
+        sw.on('message_private_user', (data) => {
+            body.insertAdjacentHTML('beforebegin', `<li>${data.message}</li>`);
+        });
+        // socket_private.on('hello', (data) => {
+        //     console.log(data)
+        // });
+
+        // socket_private.emit('ss', { a: 'ss' })
     </script>
 </body>
 

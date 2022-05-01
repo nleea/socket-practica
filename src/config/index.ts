@@ -11,8 +11,9 @@ export class Index {
     io: Server;
     constructor() {
         this.app = express();
-        this.io = new Server(this.listen(), { wsEngine: eiows.Server, });
         this.middleware();
+        this.io = new Server(this.listen(), { wsEngine: eiows.Server });
+        this.appSockets()
         // this.route();
     }
 
@@ -23,14 +24,18 @@ export class Index {
         this.app.set('views', resolve('src/public'));
         this.app.engine('html', engine.hogan);
         this.app.set('view engine', 'html');
-        this.app.use(express.static(join(__dirname,'../public')));
-        sockets(this.io);
+        this.app.use(express.static(join(__dirname, '../public')));
+
     }
 
     route() {
         // this.app.use('/', (req: Request, res: Response) => {
         //     res.render('index.html');
         // });
+    }
+
+    appSockets() {
+        sockets(this.io);
     }
 
     listen() {
