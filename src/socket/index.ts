@@ -2,17 +2,16 @@ import { Server } from 'socket.io';
 
 export function sockets(io: Server) {
     io.on('connect', (socket) => {
-        // socket.on('message', (data) => {
-        //     console.log(data);
-        // });
         socket.join(['personal', 'room1']);
         socket.on('change_room', (data) => {
             socket.in(data.id).socketsLeave(data.room);
             socket.join(data.room);
         });
+
         socket.on('private_message', async (data) => {
             socket.to(data.room).emit('message_private', { message: data.message });
         });
+
         socket.on('online', async () => {
             const online: string[] = [];
             const sockets_online = await io.sockets.allSockets();

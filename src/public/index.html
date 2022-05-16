@@ -77,19 +77,15 @@
         const sw = manager.socket('/');
         const socket_private = manager.socket('/grupo1');
         let id = ''
-        sw.on('connection', async (socket) => {
-
-        });
+        sw.on('connection', async (socket) => { });
         let room = 'room1';
         let user = document.getElementById('private').options[0].value;
-        console.log(user);
-        // sw.emit('message', { message: 'hello' });
+
         const changeRoom = document.getElementById('room');
         changeRoom.addEventListener('change', (e) => {
             room = e.target.options[e.target.options.selectedIndex].value;
             sw.emit('change_room', { a: sw.id, room: room });
         });
-
 
         const button = document.getElementById('send_message_room');
         const button_user = document.getElementById('send_message_user');
@@ -111,6 +107,7 @@
         });
 
         sw.emit('online');
+
         sw.on('show_online', (data) => {
             while (online.hasChildNodes()) {
                 if (online.firstChild.value !== 'static') {
@@ -119,8 +116,7 @@
                     break;
                 }
             }
-            // const option = document.createElement('option');
-            // option.value = '----------';
+
             data.id.forEach((s) => {
                 if (s !== sw.id) {
                     const option = document.createElement('option');
@@ -131,7 +127,7 @@
             });
         });
 
-        sw.emit('nuevo', 'sss');
+        sw.emit('nuevo');
         sw.on('actualiza', (data) => {
             while (online.hasChildNodes()) {
                 if (online.firstChild.value !== 'static') {
@@ -155,6 +151,7 @@
         sw.on('message_private', (data) => {
             body.insertAdjacentHTML('beforebegin', `<li>${data.message}</li>`);
         });
+
         sw.on('message_private_user', (data) => {
             body.insertAdjacentHTML('beforebegin', `<li>${data.message}</li>`);
         });
